@@ -212,7 +212,8 @@ var BILIBILI_MATCH_RE =
   /(\/video\/|\/medialist\/play\/.*\/|\/video\/av)(.*)\/?/gi
 function detectBilibili(url) {
   var match
-  return url.hostname === "bilibili.com" &&
+  BILIBILI_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("bilibili.com") != -1 &&
     (match = BILIBILI_MATCH_RE.exec(url.pathname))
     ? match[2]
     : null
@@ -221,7 +222,8 @@ function detectBilibili(url) {
 var YOUKU_MATCH_RE = /\/v_show\/id_(.*)\.html/gi
 function detectYouku(url) {
   var match
-  return url.hostname === "youku.com" &&
+  YOUKU_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("youku.com") != -1 &&
     (match = YOUKU_MATCH_RE.exec(url.pathname))
     ? match[1]
     : null
@@ -236,7 +238,7 @@ var QQ_MATCH_RE = [
   "/page/[^/]+/[^/]+/[^/]+/(?<id>\\w+)\\.html",
 ]
 function detectQq(url) {
-  if (url.hostname === "v.qq.com") {
+  if (url.hostname.indexOf("qq.com") != -1) {
     var match
     QQ_MATCH_RE.some(function (m) {
       match = new RegExp(m).exec(url.pathname)
@@ -250,7 +252,8 @@ function detectQq(url) {
 var HUYA_MATCH_RE = /\/play\/(.*)\.html/gi
 function detectHuya(url) {
   var match
-  return url.hostname === "v.huya.com" &&
+  HUYA_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("huya.com") != -1 &&
     (match = HUYA_MATCH_RE.exec(url.pathname))
     ? match[1]
     : null
@@ -259,7 +262,8 @@ function detectHuya(url) {
 var DOUYU_MATCH_RE = /\/show\/(.*)/gi
 function detectDouyu(url) {
   var match
-  return url.hostname === "v.douyu.com" &&
+  DOUYU_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("douyu.com") != -1 &&
     (match = DOUYU_MATCH_RE.exec(url.pathname))
     ? match[1]
     : null
@@ -268,7 +272,8 @@ function detectDouyu(url) {
 var MISSEVAN_MATCH_RE = /\/albumiframe\/(.*)/gi
 function detectMissevan(url) {
   var match
-  return url.hostname === "www.missevan.com" &&
+  MISSEVAN_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("missevan.com") != -1 &&
     (match = MISSEVAN_MATCH_RE.exec(url.pathname))
     ? match[1]
     : null
@@ -277,7 +282,8 @@ function detectMissevan(url) {
 var ACFUN_MATCH_RE = /\/v\/(.*)/gi
 function detectAcfun(url) {
   var match
-  return url.hostname === "acfun.cn" &&
+  ACFUN_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("acfun.cn") != -1 &&
     (match = ACFUN_MATCH_RE.exec(url.pathname))
     ? match[1]
     : null
@@ -285,7 +291,8 @@ function detectAcfun(url) {
 var NETEASE_MATCH_RE = /\/outchain\/\d\/(.*)/gi
 function detectNetease(url) {
   var match
-  return url.hostname === "music.163.com" &&
+  NETEASE_MATCH_RE.lastIndex = 0
+  return url.hostname.indexOf("music.163.com") != -1 &&
     (match = NETEASE_MATCH_RE.exec(url.hash))
     ? match[1]
     : null
