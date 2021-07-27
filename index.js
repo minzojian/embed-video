@@ -248,7 +248,7 @@ function detectQq(url) {
 }
 
 var HUYA_MATCH_RE = /\/play\/(.*)\.html/gi
-function detectDouyu(url) {
+function detectHuya(url) {
   var match
   return url.hostname === "v.huya.com" &&
     (match = HUYA_MATCH_RE.exec(url.pathname))
