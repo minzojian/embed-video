@@ -181,6 +181,7 @@ var VIMEO_MATCH_RE =
 
 function detectVimeo(url) {
   var match
+  VIMEO_MATCH_RE.lastIndex = 0
   return url.hostname === "vimeo.com" &&
     (match = VIMEO_MATCH_RE.exec(url.pathname))
     ? match[1]
