@@ -34,13 +34,12 @@ var validDailyMotionOpts = [
   "thumbnail_1080_url",
 ]
 
-var VIMEO_MATCH_RE =
-  /^(?:\/video|\/channels\/[\w-]+|\/groups\/[\w-]+\/videos)?\/(\d+)/
-
 function embed(url, opts) {
   if (url.startsWith("<iframe")) return url
   var res = embed.info(url)
-  return res && embed[res.source] && embed[res.source](res.id, opts)
+  return (
+    res && embed[res.source] && embed[res.source](res.id, { ...res, ...opts })
+  )
 }
 
 embed.info = function (url) {
@@ -78,13 +77,15 @@ embed.info = function (url) {
     }
   }
 
-  id = detectBilibili(url)
-  if (id) {
+  var testBilibili = detectBilibili(url)
+  if (testBilibili) {
     return {
-      id: id,
+      id: testBilibili[0],
       source: BILIBILI,
       url: url.href,
       type: "video",
+      page: testBilibili[1] || 1,
+      isAV: testBilibili[2],
     }
   }
 
@@ -173,8 +174,10 @@ embed.image = function (url, opts, cb) {
     return setTimeout(function () {
       cb()
     })
-  return res && embed[res.source].image(res.id, opts, cb)
+  return res && embed[res.source].image(res.id, { ...res, ...opts }, cb)
 }
+var VIMEO_MATCH_RE =
+  /^(?:\/video|\/channels\/[\w-]+|\/groups\/[\w-]+\/videos)?\/(\d+)/
 
 function detectVimeo(url) {
   var match
@@ -208,15 +211,22 @@ function detectDailymotion(url) {
   return null
 }
 
+var BILIBILI_AV_MATCH_RE = /(\/video\/av)(\d+)(\?p=(\d+))?/gi
 var BILIBILI_MATCH_RE =
-  /(\/video\/|\/medialist\/play\/.*\/|\/video\/av)(.*)\/?/gi
+  /(\/video\/|\/medialist\/play\/.*\/)([^\?|\/]*)\/?(\?p=(\d+))?/gi
 function detectBilibili(url) {
   var match
   BILIBILI_MATCH_RE.lastIndex = 0
-  return url.hostname.indexOf("bilibili.com") != -1 &&
-    (match = BILIBILI_MATCH_RE.exec(url.pathname))
-    ? match[2]
-    : null
+
+  BILIBILI_AV_MATCH_RE.lastIndex = 0
+  if (url.hostname.indexOf("bilibili.com") != -1) {
+    ;(match = BILIBILI_AV_MATCH_RE.exec(url.href)) ? [match[2], match[4]] : null
+    if (match) {
+      return [match[2], match[4], true]
+    }
+    match = BILIBILI_MATCH_RE.exec(url.href)
+    return match ? [match[2], match[4], false] : null
+  }
 }
 
 var YOUKU_MATCH_RE = /\/v_show\/id_(.*)\.html/gi
@@ -241,7 +251,7 @@ function detectQq(url) {
   if (url.hostname.indexOf("qq.com") != -1) {
     var match
     QQ_MATCH_RE.some(function (m) {
-      match = new RegExp(m).exec(url.pathname)
+      match = new RegExp(m).exec(url.href)
       return match && match.groups["id"]
     })
     return match && match.groups["id"]
@@ -301,7 +311,7 @@ function detectNetease(url) {
 embed.vimeo = function (id, opts) {
   opts = parseOptions(opts)
   return (
-    '<iframe src="//player.vimeo.com/video/' +
+    '<iframe src="https://player.vimeo.com/video/' +
     id +
     opts.query +
     '"' +
@@ -313,7 +323,7 @@ embed.vimeo = function (id, opts) {
 embed.youtube = function (id, opts) {
   opts = parseOptions(opts)
   return (
-    '<iframe src="//www.youtube.com/embed/' +
+    '<iframe src="https://www.youtube.com/embed/' +
     id +
     opts.query +
     '"' +
@@ -325,7 +335,7 @@ embed.youtube = function (id, opts) {
 embed.dailymotion = function (id, opts) {
   opts = parseOptions(opts)
   return (
-    '<iframe src="//www.dailymotion.com/embed/video/' +
+    '<iframe src="https://www.dailymotion.com/embed/video/' +
     id +
     opts.query +
     '"' +
@@ -337,30 +347,33 @@ embed.dailymotion = function (id, opts) {
 embed.bilibili = function (id, opts) {
   opts = parseOptions(opts, true)
   return (
-    '<iframe src="//player.bilibili.com/player.html?&bvid="' +
+    '<iframe src="https://player.bilibili.com/player.html?&' +
+    (opts.isAV ? "aid=" : "bvid=") +
     id +
+    "&page=" +
+    (opts.page || 1) +
     opts.query +
     '"' +
     opts.attr +
-    ' frameborder="0" allowfullscreen></iframe>'
+    ' scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>'
   )
 }
 
 embed.youku = function (id, opts) {
   opts = parseOptions(opts)
   return (
-    '<iframe height=498 width=510 src="https://player.youku.com/embed/"' +
+    '<iframe height=498 width=510 src="https://player.youku.com/embed/' +
     id +
     opts.query +
     '"' +
     opts.attr +
-    ' frameborder="0" allowfullscreen></iframe>'
+    ' scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>'
   )
 }
 embed.qq = function (id, opts) {
   opts = parseOptions(opts, true)
   return (
-    '<iframe height=498 width=510 src="https:////v.qq.com/iframe/player.html?vid=' +
+    '<iframe height=498 width=510 src="https://v.qq.com/iframe/player.html?vid=' +
     id +
     "&tiny=0&auto=0" +
     opts.query +
@@ -378,7 +391,7 @@ embed.huya = function (id, opts) {
     opts.query +
     '"' +
     opts.attr +
-    ' frameborder="0" allowfullscreen></iframe>'
+    ' scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>'
   )
 }
 
@@ -387,11 +400,11 @@ embed.douyu = function (id, opts) {
   return (
     '<iframe height=498 width=510 src="https://v.douyu.com/video/share/index?vid=' +
     id +
-    "&tiny=0&auto=0" +
+    +"&tiny=0&auto=0" +
     opts.query +
     '"' +
     opts.attr +
-    ' frameborder="0" allowfullscreen></iframe>'
+    ' scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>'
   )
 }
 
@@ -416,13 +429,13 @@ embed.acfun = function (id, opts) {
     opts.query +
     '"' +
     opts.attr +
-    ' frameborder="0" allowfullscreen></iframe>'
+    ' scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>'
   )
 }
 embed.netease = function (id, opts) {
   opts = parseOptions(opts, true)
   return (
-    '<iframe src="//music.163.com/outchain/player?type=2&id=' +
+    '<iframe src="https://music.163.com/outchain/player?type=2&id=' +
     id +
     "&auto=1&height=66" +
     opts.query +
